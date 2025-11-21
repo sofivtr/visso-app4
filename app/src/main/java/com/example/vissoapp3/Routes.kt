@@ -7,4 +7,5 @@ object Routes {
     const val LentesOpticos = "lentesopticos"
     const val Login = "login"
     const val Carrito = "carrito"
+    const val Register = "register"
 }

@@ -190,10 +190,11 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             Text(
-                text = "¿Olvidaste tu contraseña?",
+                text = "¿No tienes cuenta? Regístrate aquí",
                 color = Color(0xFF1976D2),
-                textDecoration = TextDecoration.Underline,
+                fontWeight = FontWeight.Bold,
                 modifier = Modifier.clickable {
+                    navController.navigate(Routes.Register)
                 }
             )
         }

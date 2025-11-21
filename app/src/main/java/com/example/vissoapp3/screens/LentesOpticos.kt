@@ -1,53 +1,42 @@
 package com.example.vissoapp3.screens
 
 import android.net.Uri
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.vissoapp3.R
 import com.example.vissoapp3.Routes
-import com.example.vissoapp3.ui.components.Navbar
+import com.example.vissoapp3.data.model.Producto
 import com.example.vissoapp3.data.viewmodel.LentesOpticosViewModel
-import com.example.vissoapp3.data.ProductItem
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import com.example.vissoapp3.data.viewmodel.LentesUiState
 import com.example.vissoapp3.ui.components.AppBottomBar
+import com.example.vissoapp3.ui.components.Navbar
 
 @Composable
 fun LentesOpticosScreen(
     navController: NavController,
-    viewModel: LentesOpticosViewModel = LentesOpticosViewModel()
+    viewModel: LentesOpticosViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
-    val productosState = viewModel.productos.collectAsState()
-
-    // Convertimos a ProductItem sin modificar el diseño
-    val products = productosState.value.map {
-        ProductItem(
-            name = it.nombre,
-            brand = it.marca?.nombre ?: "",
-            price = it.precio.toInt(),
-            imageRes = R.drawable.lente1 // Esto luego será reemplazado por la imagen real
-        )
-    }
+    val state by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
@@ -65,9 +54,7 @@ fun LentesOpticosScreen(
                 }
             )
         },
-        bottomBar = {
-            AppBottomBar(navController)
-        }
+        bottomBar = { AppBottomBar(navController) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -75,32 +62,53 @@ fun LentesOpticosScreen(
                 .padding(innerPadding)
                 .background(Color(0xFFF5F5F5))
         ) {
-
+            // Encabezado
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)
-                    .background(Color(0xFF2196F3))
+                    .background(Color(0xFF2196F3)),
+                contentAlignment = Alignment.CenterStart
             ) {
                 Text(
                     text = "Lentes ópticos",
                     color = Color.White,
-                    fontSize = 26.sp,
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .padding(start = 24.dp)
+                    modifier = Modifier.padding(start = 24.dp)
                 )
             }
 
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(products) { product ->
-                    ProductBox(product, navController)
+            // Contenido según el Estado (Loading, Success, Error)
+            when (val uiState = state) {
+                is LentesUiState.Loading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Color(0xFF2196F3))
+                    }
+                }
+                is LentesUiState.Error -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(text = "Ups! Algo salió mal.", fontWeight = FontWeight.Bold)
+                            Text(text = uiState.message, color = Color.Red, fontSize = 14.sp)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(onClick = { viewModel.cargarProductos() }) {
+                                Text("Reintentar")
+                            }
+                        }
+                    }
+                }
+                is LentesUiState.Success -> {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(uiState.productos) { producto ->
+                            ProductBox(producto, navController)
+                        }
+                    }
                 }
             }
         }
@@ -108,23 +116,28 @@ fun LentesOpticosScreen(
 }
 
 @Composable
-fun ProductBox(product: ProductItem, navController: NavController) {
-    Box(
+fun ProductBox(producto: Producto, navController: NavController) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color.White)
-            .padding(12.dp)
-            .clickable {},
+            .clickable { /* Podrías ir al detalle aquí */ }
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Image(
-                painter = painterResource(id = product.imageRes),
-                contentDescription = product.name,
+            // IMAGEN DINÁMICA CON COIL
+            AsyncImage(
+                model = producto.imagenUrl ?: R.drawable.lente1, // Fallback si es null
+                contentDescription = producto.nombre,
+                placeholder = painterResource(R.drawable.lente1), // Mientras carga
+                error = painterResource(R.drawable.lente1),       // Si falla la carga
                 modifier = Modifier
                     .size(90.dp)
                     .clip(RoundedCornerShape(12.dp)),
@@ -138,17 +151,28 @@ fun ProductBox(product: ProductItem, navController: NavController) {
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = product.name,
+                    text = producto.nombre,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF212121)
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = product.brand,
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
+                producto.marca?.let {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = it.nombre,
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+                }
+                // Ejemplo de descripción corta
+                if (!producto.descripcion.isNullOrBlank()) {
+                    Text(
+                        text = producto.descripcion,
+                        fontSize = 12.sp,
+                        color = Color.LightGray,
+                        maxLines = 1
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -157,7 +181,10 @@ fun ProductBox(product: ProductItem, navController: NavController) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Button(
-                    onClick = { navController.navigate("${Routes.FormularioCot}/${Uri.encode(product.name)}") },
+                    onClick = {
+                        // Pasamos el nombre al formulario
+                        navController.navigate("${Routes.FormularioCot}/${Uri.encode(producto.nombre)}")
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3)),
                     shape = RoundedCornerShape(20.dp),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
@@ -171,7 +198,7 @@ fun ProductBox(product: ProductItem, navController: NavController) {
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "$${product.price} CLP",
+                    text = "$${producto.precio.toInt()} CLP",
                     color = Color(0xFF2E7D32),
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,

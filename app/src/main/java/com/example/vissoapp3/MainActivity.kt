@@ -36,7 +36,8 @@ class MainActivity : ComponentActivity() {
                     CategoriesScreen(navController = navController)
                 }
                 composable("${Routes.FormularioCot}/{nombreLente}") { backStackEntry ->
-                    val nombreLente = backStackEntry.arguments?.getString("nombreLente") ?: "Lente Óptico"
+                    val nombreLente =
+                        backStackEntry.arguments?.getString("nombreLente") ?: "Lente Óptico"
                     FormularioCotScreen(navController = navController, nombreLente = nombreLente)
                 }
                 composable(Routes.LentesOpticos) {
@@ -44,6 +45,9 @@ class MainActivity : ComponentActivity() {
                 }
                 composable(Routes.Carrito) {
                     CarritoScreen(navController = navController)
+                }
+                composable(Routes.Register) {
+                    RegisterScreen(navController = navController)
                 }
             }
         }
