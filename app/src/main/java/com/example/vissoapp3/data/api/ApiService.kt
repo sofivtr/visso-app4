@@ -17,27 +17,35 @@ interface ApiService {
 
     // Productos
     @GET("productos")
-    suspend fun obtenerProductos(): Response<List<Producto>>
+    suspend fun listarProductos(): Response<List<Producto>>
+
+    @POST("productos")
+    suspend fun crearProducto(@Body producto: Producto): Response<Producto>
+
+    @PUT("productos/{id}")
+    suspend fun actualizarProducto(@Path("id") id: Long, @Body producto: Producto): Response<Producto>
+
+    @DELETE("productos/{id}")
+    suspend fun eliminarProducto(@Path("id") id: Long): Response<Void>
+
+    // Carrito
+    @GET("carrito/{usuarioId}")
+    suspend fun obtenerCarrito(@Path("usuarioId") usuarioId: Long): Response<Carrito>
+
+    @POST("carrito/agregar")
+    suspend fun agregarAlCarrito(@Body solicitud: SolicitudCarrito): Response<Void> // El backend devuelve String, pero Void es más seguro si no parseamos
+
+    @POST("carrito/cerrar/{usuarioId}")
+    suspend fun cerrarCarrito(@Path("usuarioId") usuarioId: Long): Response<Void>
+
+    @GET("carrito/ventas")
+    suspend fun obtenerVentas(): Response<List<Carrito>>
 
     // Cotizaciones
     @POST("cotizaciones")
     suspend fun crearCotizacion(@Body cotizacion: Cotizacion): Response<Cotizacion>
 
-    // Carrito
-    @POST("carrito/agregar")
-    suspend fun agregarAlCarrito(@Body solicitud: SolicitudCarrito): Response<Void>
-
-    @GET("carrito/{idUsuario}")
-    suspend fun obtenerCarrito(@Path("idUsuario") idUsuario: Long): Response<Carrito>
-
-    @POST("carrito/cerrar/{idUsuario}")
-    suspend fun cerrarCarrito(@Path("idUsuario") idUsuario: Long): Response<Carrito>
-
-    // Admin
-    @GET("carrito/ventas")
-    suspend fun obtenerVentas(): Response<List<Carrito>>
-
-    // Perfil
+    // Usuarios
     @PUT("usuarios/{id}")
     suspend fun actualizarPerfil(@Path("id") id: Long, @Body usuario: Usuario): Response<Usuario>
 }

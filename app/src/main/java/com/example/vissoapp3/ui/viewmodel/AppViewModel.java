@@ -32,7 +32,7 @@ class AppViewModel : ViewModel() {
     // --- Carrito ---
     fun cargarCarrito() {
         val uid = SessionManager.currentUser?.id ?: return
-        viewModelScope.launch {
+                viewModelScope.launch {
             try {
                 val res = RetrofitClient.apiService.obtenerCarrito(uid)
                 if (res.isSuccessful) carrito = res.body()
@@ -42,7 +42,7 @@ class AppViewModel : ViewModel() {
 
     fun agregarAlCarrito(productoId: Long, cantidad: Int, cotizacionId: Long? = null) {
         val uid = SessionManager.currentUser?.id ?: return
-        viewModelScope.launch {
+                viewModelScope.launch {
             isLoading = true
             try {
                 val sol = SolicitudCarrito(uid, productoId, cantidad, cotizacionId)
@@ -58,7 +58,7 @@ class AppViewModel : ViewModel() {
 
     fun pagarCarrito() {
         val uid = SessionManager.currentUser?.id ?: return
-        viewModelScope.launch {
+                viewModelScope.launch {
             isLoading = true
             try {
                 val res = RetrofitClient.apiService.cerrarCarrito(uid)
